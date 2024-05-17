@@ -6,7 +6,7 @@ from datetime import datetime as dt
 class Todo:
     def __init__(self, text: str, date_due: dt.date = None):
         self.todo_name: str = text
-        self.date_added: dt.date = dt.now().date()
+        self.date_added: dt.date = dt.now()
         self.date_due: dt.date = date_due
         self.date_completed: dt.date = None
         self.completed: bool = False
@@ -19,7 +19,7 @@ class Todo:
     def completed(self, completed: bool):
         self._completed = completed
         if self._completed:
-            self.date_completed = dt.now().date()
+            self.date_completed = dt.now()
         else:
             self.date_completed = None
 
@@ -41,6 +41,13 @@ class TodoApp:
         self.entry_field.bind("<Return>", lambda x: self.add_todo())
         self.entry_field.pack(side="left")
 
+        self.show_calendar_label = tk.Label(self.entry_frame, text="Use due date ")
+        self.show_calendar_label.pack()
+        self.show_calendar = tk.BooleanVar(value=False)
+        self.calendar_activate = tk.Checkbutton(
+            self.entry_frame, variable=self.show_calendar, command=self.update_calendar
+        )
+        self.calendar_activate.pack()
         self.calendar = Calendar(self.entry_frame, selectmode="day")
         self.calendar.pack()
 
@@ -52,7 +59,16 @@ class TodoApp:
         self.todo_frame: tk.Frame = tk.Frame(self.root)
         self.todo_frame.pack()
 
+        self.update_calendar()
+        self.update_view
         self.root.mainloop()
+
+    def update_calendar(self):
+        if self.show_calendar.get() == tk.TRUE:
+            self.calendar.config(state="normal")
+        else:
+            self.calendar.config(state="disabled")
+            pass
 
     def add_todo(self):
         text = self.entry_field.get()
@@ -60,7 +76,10 @@ class TodoApp:
         date_obj = dt.strptime(date_str, "%m/%d/%y")
         if text != "":
             self.entry_field.delete(0, tk.END)
-            self.todos.append(Todo(text=text, date_due=date_obj))
+            if self.show_calendar.get() == tk.TRUE:
+                self.todos.append(Todo(text=text, date_due=date_obj))
+            else:
+                self.todos.append(Todo(text=text))
             self.update_view()
 
     def remove_todo(self, todo: Todo):
@@ -76,8 +95,12 @@ class TodoApp:
         complete = [todo for todo in self.todos if todo.completed]
         incomplete = [todo for todo in self.todos if not todo.completed]
 
-        complete.sort(key=lambda x: x.date_due)
-        incomplete.sort(key=lambda x: x.date_due)
+        complete.sort(
+            key=lambda x: x.date_due if x.date_due is not None else x.date_added
+        )
+        incomplete.sort(
+            key=lambda x: x.date_due if x.date_due is not None else x.date_added
+        )
 
         self.todos = incomplete + complete
 
@@ -100,11 +123,12 @@ class TodoElement:
         self.todo_name = tk.Label(self.text_frame, text=self.todo.todo_name)
         self.todo_name.pack()
 
-        self.todo_date_due = tk.Label(
-            self.text_frame,
-            text="Due " + self.todo.date_due.strftime("%a %d %b %Y, %I:%M%p"),
-        )
-        self.todo_date_due.pack()
+        if self.todo.date_due is not None:
+            self.todo_date_due = tk.Label(
+                self.text_frame,
+                text="Due " + self.todo.date_due.strftime("%a %d %b %Y, %I:%M%p"),
+            )
+            self.todo_date_due.pack()
 
         self.todo_date_created = tk.Label(
             self.text_frame,
@@ -115,7 +139,7 @@ class TodoElement:
         if self.todo.date_due is not None:
             self.due_text = tk.Label(
                 self.text_frame,
-                text="Due: " + self.todo.date_due.strftime("%a %d %b %Y, %I:%M%p"),
+                text="Due: " + self.todo.date_due.strftime("%a %d %b %Y"),
             )
 
         self.todo_date_completed = tk.Label(self.text_frame, text="Completed ")
@@ -138,7 +162,7 @@ class TodoElement:
         self.parent.remove_todo(self.todo)
 
     def on_toggle(self):
-        if self.check_variable.get() == 1:
+        if self.check_variable.get() == tk.TRUE:
             self.todo.completed = True
         else:
             self.todo.completed = False
@@ -147,10 +171,12 @@ class TodoElement:
 
     def update_view(self):
         if self.todo.completed:
-            self.todo.date_completed = dt.now().date()
+            self.todo.date_completed = dt.now()
             self.todo_name.config(fg="gray")
             self.todo_date_created.config(fg="gray")
-            self.todo_date_due.config(fg="gray")
+
+            if self.todo.date_due is not None:
+                self.todo_date_due.config(fg="gray")
             self.todo_date_completed.config(
                 text="Completed: "
                 + self.todo.date_completed.strftime("%a %d %b %Y, %I:%M%p"),
@@ -162,7 +188,8 @@ class TodoElement:
             self.todo.date_completed = None
             self.todo_name.config(text=self.todo.todo_name, fg="white")
             self.todo_date_created.config(fg="white")
-            self.todo_date_due.config(fg="white")
+            if self.todo.date_due is not None:
+                self.todo_date_due.config(fg="white")
 
             self.todo_date_completed.pack_forget()
 
