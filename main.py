@@ -1,15 +1,15 @@
 import tkinter as tk
+from tkcalendar import Calendar
 from datetime import datetime as dt
 
 
 class Todo:
-
-    def __init__(self, text: str, date_due=None):
-        self.text: str = text
+    def __init__(self, text: str, date_due: dt.date = None):
+        self.todo_name: str = text
         self.date_added: dt.date = dt.now().date()
         self.date_due: dt.date = date_due
         self.date_completed: dt.date = None
-        completed: bool = False
+        self.completed: bool = False
 
     @property
     def completed(self):
@@ -19,34 +19,44 @@ class Todo:
     def completed(self, completed: bool):
         self._completed = completed
         if self._completed:
-            date_completed = dt.now().date()
+            self.date_completed = dt.now().date()
         else:
-            date_completed = None
+            self.date_completed = None
 
 
 class TodoApp:
     def __init__(self):
         self.root: tk.Tk = tk.Tk()
         self.root.title("SimpleTodo")
-        self.root.geometry("400x300")
+        self.root.geometry("600x600")
         self.todos: List[Todo] = []
 
-        self.entry_field = tk.Entry(self.root)
-        self.entry_field.pack(side="top")
+        self.entry_frame = tk.Frame(self.root)
+        self.entry_frame.pack()
 
-        self.submit_button = tk.Button(self.root, text=">>", command=self.add_todo)
-        self.submit_button.pack(side="top")
+        self.entry_field = tk.Entry(self.entry_frame)
+        self.entry_field.pack(side="left")
+
+        self.calendar = Calendar(self.entry_frame, selectmode="day")
+        self.calendar.pack()
+
+        self.submit_button = tk.Button(
+            self.entry_frame, text=">>", command=self.add_todo
+        )
+        self.submit_button.pack(side="right")
 
         self.todo_frame: tk.Frame = tk.Frame(self.root)
-        self.todo_frame.pack(side="bottom")
+        self.todo_frame.pack()
 
         self.root.mainloop()
 
     def add_todo(self):
         text = self.entry_field.get()
+        date_str = self.calendar.get_date()
+        date_obj = dt.strptime(date_str, "%m/%d/%y")
         if text != "":
             self.entry_field.delete(0, tk.END)
-            self.todos.append(Todo(text=text))
+            self.todos.append(Todo(text=text, date_due=date_obj))
             self.update_view()
 
     def remove_todo(self, todo: Todo):
@@ -62,7 +72,7 @@ class TodoApp:
             child.destroy()
 
         for todo in self.todos:
-            new_todo_element = TodoElement(todo, self)
+            TodoElement(todo, self)
 
 
 class TodoElement:
@@ -74,37 +84,71 @@ class TodoElement:
         self.frame = tk.Frame(parent.todo_frame)
         self.frame.pack()
 
-        self.text = tk.Label(self.frame, text=self.todo.text)
-        self.text.pack(side="left")
+        self.text_frame = tk.Frame(self.frame)
+        self.text_frame.pack(side="left")
+
+        self.todo_name = tk.Label(self.text_frame, text=self.todo.todo_name)
+        self.todo_name.pack()
+
+        self.todo_date_created = tk.Label(
+            self.text_frame,
+            text="Added " + self.todo.date_added.strftime("%a %d %b %Y, %I:%M%p"),
+        )
+        self.todo_date_created.pack()
+
+        self.todo_date_due = tk.Label(
+            self.text_frame,
+            text="Due " + self.todo.date_due.strftime("%a %d %b %Y, %I:%M%p"),
+        )
+        self.todo_date_due.pack()
 
         if self.todo.date_due is not None:
             self.due_text = tk.Label(
-                self.frame, text="Due: " + self.todo.date_due.strftime("%M / %D / %Y")
+                self.text_frame,
+                text="Due: " + self.todo.date_due.strftime("%a %d %b %Y, %I:%M%p"),
             )
 
-        self.check_variable = tk.BooleanVar()
-        self.checkbox = tk.Checkbutton(
-            self.frame, variable=self.check_variable, command=self.toggle_todo
-        )
-        self.checkbox.pack(side="left")
+        self.todo_date_completed = tk.Label(self.text_frame, text="Completed ")
+        self.todo_date_completed.pack_forget()
 
         self.delete_button: tk.Button = tk.Button(
             self.frame, text="x", command=self.on_delete
         )
-        self.delete_button.pack()
+        self.delete_button.pack(side="right")
+
+        self.check_variable = tk.BooleanVar(value=self.todo.completed)
+        self.checkbox = tk.Checkbutton(
+            self.frame, variable=self.check_variable, command=self.update_view
+        )
+        self.checkbox.pack(side="right")
+
+        self.update_view()
 
     def on_delete(self):
         self.parent.remove_todo(self.todo)
 
-    def toggle_todo(self):
+    def update_view(self):
         if self.check_variable.get() == 1:
             self.todo.date_completed = dt.now().date()
             self.todo.completed = True
-            self.text.config(text="\u0336".join(self.todo.text) + "\u0336", fg="gray")
+            self.todo_name.config(fg="gray")
+            self.todo_date_created.config(fg="gray")
+            self.todo_date_due.config(fg="gray")
+            self.todo_date_completed.config(
+                text="Completed: "
+                + self.todo.date_completed.strftime("%a %d %b %Y, %I:%M%p"),
+                fg="gray",
+            )
+            self.todo_date_completed.pack()
+
         else:
             self.todo.date_completed = None
             self.todo.completed = False
-            self.text.config(text=self.todo.text, fg="white")
+            self.todo_name.config(text=self.todo.todo_name, fg="white")
+            self.todo_date_created.config(fg="white")
+            self.todo_date_due.config(fg="white")
+
+            self.todo_date_completed.pack_forget()
 
 
 if __name__ == "__main__":
