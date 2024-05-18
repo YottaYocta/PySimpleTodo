@@ -37,31 +37,37 @@ class TodoApp:
         # entry
 
         self.entry_frame = tk.Frame(self.root)
-        self.entry_frame.pack()
+        self.entry_frame.grid(row=0, column=0, rowspan=2)
+
+        self.entry_field_label = tk.Label(self.entry_frame, text="Todo Name: ")
+        self.entry_field_label.grid(row=0, column=0, sticky=tk.NW, pady=20)
 
         self.entry_field = tk.Entry(self.entry_frame)
         self.entry_field.bind("<Return>", lambda x: self.add_todo())
-        self.entry_field.pack(side="left")
+        self.entry_field.grid(row=0, column=1, sticky=tk.NSEW, pady=20)
 
-        self.show_calendar_label = tk.Label(self.entry_frame, text="Use due date ")
-        self.show_calendar_label.pack()
+        self.calendar_label_frame = tk.Frame(self.entry_frame)
+        self.calendar_label_frame.grid(row=1, column=0, sticky=tk.NW, pady=20)
+
+        self.show_calendar_label = tk.Label(self.calendar_label_frame, text="Due Date:")
+        self.show_calendar_label.pack(side="right", anchor=tk.N)
         self.show_calendar = tk.BooleanVar(value=False)
         self.calendar_activate = tk.Checkbutton(
-            self.entry_frame, variable=self.show_calendar, command=self.update_calendar
+            self.calendar_label_frame,
+            variable=self.show_calendar,
+            command=self.update_calendar,
         )
-        self.calendar_activate.pack()
+        self.calendar_activate.pack(side="left", anchor=tk.N)
         self.calendar = Calendar(self.entry_frame, selectmode="day")
-        self.calendar.pack()
+        self.calendar.grid(row=1, column=1, sticky=tk.NW, pady=20)
 
-        self.submit_button = tk.Button(
-            self.entry_frame, text=">>", command=self.add_todo
-        )
-        self.submit_button.pack(side="right")
+        self.submit_button = tk.Button(self.root, text=">>", command=self.add_todo)
+        self.submit_button.grid(row=2, column=0, sticky=tk.EW, pady=20)
 
         # todo list
 
         self.todo_frame: tk.Frame = tk.Frame(self.root)
-        self.todo_frame.pack()
+        self.todo_frame.grid(row=0, column=1, padx=40)
 
         # page controls
 
@@ -69,7 +75,7 @@ class TodoApp:
         self._current_page = 0
         self.todos_per_page = 5
         self.page_control_frame = tk.Frame(self.root)
-        self.page_control_frame.pack(side="bottom")
+        self.page_control_frame.grid(row=2, column=1, padx=40)
 
         def increment_page():
             self.current_page += 1
@@ -107,9 +113,10 @@ class TodoApp:
     def update_calendar(self):
         if self.show_calendar.get() == tk.TRUE:
             self.calendar.config(state="normal")
+            self.show_calendar_label.config(fg="white")
         else:
             self.calendar.config(state="disabled")
-            pass
+            self.show_calendar_label.config(fg="gray")
 
     def add_todo(self):
         text = self.entry_field.get()
