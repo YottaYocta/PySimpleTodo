@@ -31,13 +31,13 @@ class TodoApp:
     def __init__(self):
         self.root: tk.Tk = tk.Tk()
         self.root.title("SimpleTodo")
-        self.root.geometry("600x600")
+        self.root.geometry("800x400")
         self.todos: List[Todo] = []
 
         # entry
 
         self.entry_frame = tk.Frame(self.root)
-        self.entry_frame.grid(row=0, column=0, rowspan=2)
+        self.entry_frame.grid(row=0, column=0, rowspan=2, sticky=tk.NW, padx=40)
 
         self.entry_field_label = tk.Label(self.entry_frame, text="Todo Name: ")
         self.entry_field_label.grid(row=0, column=0, sticky=tk.NW, pady=20)
@@ -61,21 +61,23 @@ class TodoApp:
         self.calendar = Calendar(self.entry_frame, selectmode="day")
         self.calendar.grid(row=1, column=1, sticky=tk.NW, pady=20)
 
-        self.submit_button = tk.Button(self.root, text=">>", command=self.add_todo)
-        self.submit_button.grid(row=2, column=0, sticky=tk.EW, pady=20)
+        self.submit_button = tk.Button(
+            self.entry_frame, text=">>", command=self.add_todo
+        )
+        self.submit_button.grid(row=2, column=0, columnspan=2, sticky=tk.EW, pady=20)
 
         # todo list
 
         self.todo_frame: tk.Frame = tk.Frame(self.root)
-        self.todo_frame.grid(row=0, column=1, padx=40)
+        self.todo_frame.grid(row=0, column=1, padx=40, sticky=tk.N)
 
         # page controls
 
         self.total_page_count = 0
         self._current_page = 0
-        self.todos_per_page = 5
+        self.todos_per_page = 6
         self.page_control_frame = tk.Frame(self.root)
-        self.page_control_frame.grid(row=2, column=1, padx=40)
+        self.page_control_frame.grid(row=2, column=1, padx=40, pady=40, sticky=tk.W)
 
         def increment_page():
             self.current_page += 1
@@ -96,6 +98,7 @@ class TodoApp:
             self.page_control_frame, command=increment_page, text=">"
         )
         self.next_page_button.pack(side="right")
+
         self.update_calendar()
         self.update_view()
         self.root.mainloop()
@@ -151,7 +154,7 @@ class TodoApp:
         )
 
         self.todos = incomplete + complete
-        self.total_page_count = len(self.todos) // self.todos_per_page
+        self.total_page_count = max(0, (len(self.todos) - 1)) // self.todos_per_page
         self.current_page = max(0, min(self.total_page_count, self.current_page))
 
         self.page_label.config(
@@ -167,6 +170,11 @@ class TodoApp:
         ]:
             TodoElement(todo, self)
 
+        if self.total_page_count > 0:
+            self.page_control_frame.grid(row=2, column=1, padx=40, sticky=tk.W)
+        else:
+            self.page_control_frame.grid_remove()
+
 
 class TodoElement:
     def __init__(self, todo: Todo, parent: TodoApp):
@@ -175,20 +183,22 @@ class TodoElement:
         self.todo = todo
 
         self.frame = tk.Frame(parent.todo_frame)
-        self.frame.pack()
+        self.frame.pack(pady=10, side="top")
 
         self.text_frame = tk.Frame(self.frame)
         self.text_frame.pack(side="left")
 
-        self.todo_name = tk.Label(self.text_frame, text=self.todo.todo_name)
-        self.todo_name.pack()
+        self.todo_name = tk.Label(
+            self.text_frame, text=self.todo.todo_name, font=("Helvetica", 24, "bold")
+        )
+        self.todo_name.pack(anchor=tk.W)
 
         if self.todo.date_due is not None:
             self.todo_date_due = tk.Label(
                 self.text_frame,
                 text="Due " + self.todo.date_due.strftime("%a %d %b %Y, %I:%M%p"),
             )
-            self.todo_date_due.pack()
+            self.todo_date_due.pack(anchor=tk.W)
 
         self.todo_date_created = tk.Label(
             self.text_frame,
@@ -202,19 +212,21 @@ class TodoElement:
                 text="Due: " + self.todo.date_due.strftime("%a %d %b %Y"),
             )
 
+        """
         self.todo_date_completed = tk.Label(self.text_frame, text="Completed ")
         self.todo_date_completed.pack_forget()
+        """
 
         self.delete_button: tk.Button = tk.Button(
             self.frame, text="x", command=self.on_delete
         )
-        self.delete_button.pack(side="right")
+        self.delete_button.pack(side="right", anchor=tk.N)
 
         self.check_variable = tk.BooleanVar(value=self.todo.completed)
         self.checkbox = tk.Checkbutton(
             self.frame, variable=self.check_variable, command=self.on_toggle
         )
-        self.checkbox.pack(side="right")
+        self.checkbox.pack(side="right", anchor=tk.N)
 
         self.update_view()
 
@@ -237,12 +249,15 @@ class TodoElement:
 
             if self.todo.date_due is not None:
                 self.todo_date_due.config(fg="gray")
+
+            """
             self.todo_date_completed.config(
                 text="Completed: "
                 + self.todo.date_completed.strftime("%a %d %b %Y, %I:%M%p"),
                 fg="gray",
             )
             self.todo_date_completed.pack()
+            """
 
         else:
             self.todo.date_completed = None
@@ -251,7 +266,9 @@ class TodoElement:
             if self.todo.date_due is not None:
                 self.todo_date_due.config(fg="white")
 
+            """
             self.todo_date_completed.pack_forget()
+            """
 
 
 if __name__ == "__main__":
