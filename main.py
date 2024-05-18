@@ -34,6 +34,8 @@ class TodoApp:
         self.root.geometry("600x600")
         self.todos: List[Todo] = []
 
+        # entry
+
         self.entry_frame = tk.Frame(self.root)
         self.entry_frame.pack()
 
@@ -56,12 +58,51 @@ class TodoApp:
         )
         self.submit_button.pack(side="right")
 
+        # todo list
+
         self.todo_frame: tk.Frame = tk.Frame(self.root)
         self.todo_frame.pack()
 
+        # page controls
+
+        self.total_page_count = 0
+        self._current_page = 0
+        self.todos_per_page = 5
+        self.page_control_frame = tk.Frame(self.root)
+        self.page_control_frame.pack(side="bottom")
+
+        def increment_page():
+            self.current_page += 1
+
+        def decrement_page():
+            self.current_page -= 1
+
+        self.previous_page_button = tk.Button(
+            self.page_control_frame, command=decrement_page, text="<"
+        )
+        self.previous_page_button.pack(side="left")
+        self.page_label = tk.Label(
+            self.page_control_frame,
+            text=f"Page {self.current_page + 1}/{self.total_page_count + 1}",
+        )
+        self.page_label.pack(side="left")
+        self.next_page_button = tk.Button(
+            self.page_control_frame, command=increment_page, text=">"
+        )
+        self.next_page_button.pack(side="right")
         self.update_calendar()
-        self.update_view
+        self.update_view()
         self.root.mainloop()
+
+    @property
+    def current_page(self):
+        return self._current_page
+
+    @current_page.setter
+    def current_page(self, page):
+        if page >= 0 and page <= self.total_page_count and page != self._current_page:
+            self._current_page = page
+            self.update_view()
 
     def update_calendar(self):
         if self.show_calendar.get() == tk.TRUE:
@@ -103,8 +144,20 @@ class TodoApp:
         )
 
         self.todos = incomplete + complete
+        self.total_page_count = len(self.todos) // self.todos_per_page
+        self.current_page = max(0, min(self.total_page_count, self.current_page))
 
-        for todo in self.todos:
+        self.page_label.config(
+            text=f"Page {self.current_page + 1}/{self.total_page_count + 1}"
+        )
+
+        for todo in self.todos[
+            self.todos_per_page
+            * self.current_page : min(
+                self.todos_per_page * (self.current_page + 1),
+                len(self.todos),
+            )
+        ]:
             TodoElement(todo, self)
 
 
