@@ -56,13 +56,14 @@ class TodoApp:
             self.calendar_label_frame,
             variable=self.show_calendar,
             command=self.update_calendar,
+            cursor="hand2",
         )
         self.calendar_activate.pack(side="left", anchor=tk.N)
         self.calendar = Calendar(self.entry_frame, selectmode="day")
         self.calendar.grid(row=1, column=1, sticky=tk.NW, pady=20)
 
         self.submit_button = tk.Button(
-            self.entry_frame, text=">>", command=self.add_todo
+            self.entry_frame, text=">>", command=self.add_todo, cursor="plus"
         )
         self.submit_button.grid(row=2, column=0, columnspan=2, sticky=tk.EW, pady=20)
 
@@ -183,10 +184,10 @@ class TodoElement:
         self.todo = todo
 
         self.frame = tk.Frame(parent.todo_frame)
-        self.frame.pack(pady=10, side="top")
+        self.frame.pack(pady=10, side="top", anchor=tk.W)
 
         self.text_frame = tk.Frame(self.frame)
-        self.text_frame.pack(side="left")
+        self.text_frame.pack(side="left", anchor=tk.W)
 
         self.todo_name = tk.Label(
             self.text_frame, text=self.todo.todo_name, font=("Helvetica", 24, "bold")
@@ -204,7 +205,7 @@ class TodoElement:
             self.text_frame,
             text="Added " + self.todo.date_added.strftime("%a %d %b %Y, %I:%M%p"),
         )
-        self.todo_date_created.pack()
+        self.todo_date_created.pack(anchor=tk.W)
 
         if self.todo.date_due is not None:
             self.due_text = tk.Label(
@@ -218,15 +219,18 @@ class TodoElement:
         """
 
         self.delete_button: tk.Button = tk.Button(
-            self.frame, text="x", command=self.on_delete
+            self.frame, text="x", command=self.on_delete, cursor="hand2"
         )
-        self.delete_button.pack(side="right", anchor=tk.N)
+        self.delete_button.pack(side="right", anchor=tk.E)
 
         self.check_variable = tk.BooleanVar(value=self.todo.completed)
         self.checkbox = tk.Checkbutton(
-            self.frame, variable=self.check_variable, command=self.on_toggle
+            self.frame,
+            variable=self.check_variable,
+            command=self.on_toggle,
+            cursor="hand2",
         )
-        self.checkbox.pack(side="right", anchor=tk.N)
+        self.checkbox.pack(side="right", anchor=tk.E)
 
         self.update_view()
 
