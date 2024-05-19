@@ -30,7 +30,7 @@ class Todo:
 class TodoApp:
     def __init__(self):
         self.root: tk.Tk = tk.Tk()
-        self.root.title("SimpleTodo")
+        self.root.title("PySimpleTodo")
         self.root.geometry("800x400")
         self.todos: List[Todo] = []
 
